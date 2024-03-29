@@ -237,29 +237,117 @@ inline char* DirectoryName( char* fileName )
 	return fileName;
 }
 
+
+#include <iostream>
+#include <string>
+#include <regex>
+#include <vector>
+
+struct dem2mesh_Para
+{
+	std::string str_para_name;
+	std::string str_para_val;
+	bool set(std::string str)
+	{
+		std::regex reg("=");
+		std::vector<std::string> results(std::sregex_token_iterator(str.begin(), str.end(), reg, -1), std::sregex_token_iterator());
+
+		if (results.size() <1)
+			return false;
+
+		str_para_name=results[0].substr(1,results[0].size()-1);
+
+		if(results.size()==1)
+		{			
+			printf_s("para name: %s\n",str_para_name.c_str());
+		}	
+
+		if(results.size()==2)
+		{
+			str_para_val=results[1];
+			printf_s("name: %s, val: %s\n",str_para_name.c_str(), str_para_val.c_str());
+		}
+		
+		return true;
+	}
+
+};
+
 inline void cmdLineParse( int argc , char **argv , cmdLineReadable** params )
 {
-	while( argc>0 )
+	std::string str_para;
+
+	for(int i=0;i<argc;i++)
 	{
-        if( argv[0][0]=='-' )
-		{
-			cmdLineReadable* readable=NULL;
-            for( int i=0 ; params[i]!=NULL && readable==NULL ; i++ ) if( !strcasecmp( params[i]->name , argv[0]+1 ) ) readable = params[i];
-			if( readable )
-			{
-				int j = readable->read( argv+1 , argc-1 );
-				argv += j , argc -= j;
-			}
-			else
-			{
-				fprintf( stderr , "[WARNING] Invalid option: %s\n" , argv[0] );
-                for( int i=0 ; params[i]!=NULL ; i++ ) printf( "\t-%s\n" , params[i]->name );
-			}
-		}
-        else fprintf( stderr , "[WARNING] Parameter name should be of the form -<name>: %s\n" , argv[0] );
-		++argv , --argc;
+		str_para+=argv[i];
+		str_para+=" ";
 	}
+	printf_s("input paras= %s\n",str_para.c_str());
+
+	std::regex reg("\\s+");
+	std::vector<std::string> results(std::sregex_token_iterator(str_para.begin(), str_para.end(), reg, -1), std::sregex_token_iterator());
+
+	 for (const auto& result : results) 
+	 {
+       
+		dem2mesh_Para pa;
+		pa.set(result);
+
+		cmdLineReadable* readable=NULL;
+        for( int i=0 ; params[i]!=NULL && readable==NULL ; i++ ) 
+		{
+			if( !strcasecmp( params[i]->name , pa.str_para_name.c_str() ) ) 
+				readable = params[i];
+		}
+
+		if( readable )
+		{			
+
+			char* charName = new char[pa.str_para_name.length() + 1];
+ 			std::strcpy(charName, pa.str_para_name.c_str());
+
+			char* charVal = new char[pa.str_para_val.length() + 1];
+			std::strcpy(charVal, pa.str_para_val.c_str());
+
+			// readable->set=true;
+			// readable->name=charName;
+			// readable->writeValue(charVal);
+			readable->read(&charVal, argc-1);
+
+			delete[] charName; 	
+			delete[] charVal; 	
+						
+			std::cout<<readable->name<<"="<<readable->set<<std::endl;
+		}
+		--argc;
+    }
+	// while( argc>0 )
+	// {
+    //     if( argv[0][0]=='-' )
+	// 	{
+	// 		cmdLineReadable* readable=NULL;
+    //         for( int i=0 ; params[i]!=NULL && readable==NULL ; i++ ) if( !strcasecmp( params[i]->name , argv[0]+1 ) ) readable = params[i];
+	// 		if( readable )
+	// 		{
+	// 			printf( "Reading %s\n" , argv[0] );
+
+	// 			int j = readable->read( argv+1 , argc-1 );
+	// 			argv += j , argc -= j;
+	// 		}
+	// 		else
+	// 		{
+	// 			fprintf( stderr , "[WARNING] Invalid option: %s\n" , argv[0] );
+    //             for( int i=0 ; params[i]!=NULL ; i++ ) printf( "\t-%s\n" , params[i]->name );
+	// 		}
+	// 	}
+    //     else fprintf( stderr , "[WARNING] Parameter name should be of the form -<name>: %s\n" , argv[0] );
+	// 	++argv , --argc;
+	// }
 }
+
+
+
+
 
 inline char** ReadWords(const char* fileName,int& cnt)
 {

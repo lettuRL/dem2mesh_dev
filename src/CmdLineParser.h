@@ -46,7 +46,7 @@ public:
 	char *name;
 	cmdLineReadable( const char *name );
 	virtual ~cmdLineReadable( void );
-	virtual int read( char** argv , int argc );
+	virtual int read(char** argv , int argc );
 	virtual void writeValue( char* str ) const;
 };
 
@@ -78,7 +78,7 @@ public:
 	~cmdLineParameterArray( void );
 	int read( char** argv , int argc );
 	void writeValue( char* str ) const;
-	bool expectsArg( void ) const { return true; }
+	bool expectsArg( void ) const { return true; } 
 };
 
 template< class Type >
